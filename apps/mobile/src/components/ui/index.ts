@@ -7,8 +7,6 @@ export * from './ProgressRing';
 export * from './ProgressBar';
 export * from './Modal';
 export * from './Chip';
-export * from './Divider';
 export * from './Skeleton';
 export * from './EmptyState';
 export * from './ErrorState';
-export * from './LoadingOverlay';
