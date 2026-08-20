@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS "streaks_user_unique" ON "streaks" USING btree ("user_id");
