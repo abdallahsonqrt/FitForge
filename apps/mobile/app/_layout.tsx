@@ -14,6 +14,7 @@ import '../src/theme/unistyles';
 import { usePreferencesStore } from '../src/store/preferencesStore';
 import { useAuthStore } from '../src/store/authStore';
 import { useSessionEndedRedirect } from '../src/features/auth/useSessionEndedRedirect';
+import { useBlockScreenCapture } from '../src/lib/screenCapture';
 import { applyLayoutDirection } from '../src/i18n';
 
 /**
@@ -68,6 +69,15 @@ export default function RootLayout() {
   const hydrated = useAuthStore((state) => state.hydrated);
   const sessionReady = useRestoredAccessToken(hydrated);
   const { theme } = useStyles();
+
+  /**
+   * Blocks screenshots and screen recording for the whole app.
+   *
+   * At the root so it covers every screen including modals. Genuinely enforced
+   * on Android (FLAG_SECURE); iOS offers no API to prevent capture and the web
+   * build cannot police the operating system — see `screenCapture.ts`.
+   */
+  useBlockScreenCapture();
 
   // Sits at the root so it covers every screen, including the ones stacked on
   // top of the tabs rather than inside an authenticated group.

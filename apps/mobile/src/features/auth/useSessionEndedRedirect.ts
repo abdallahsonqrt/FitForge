@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { router } from 'expo-router';
 import { useAuthStore } from '../../store/authStore';
+import { takePendingDestination } from '../../lib/pendingDestination';
 
 /**
  * Sends the app back to the public landing page whenever a session ends.
@@ -25,10 +26,21 @@ export const useSessionEndedRedirect = () => {
     // Drop the screens the session left behind first. The group layouts turn a
     // back gesture into a redirect on their own, but the screens stacked at the
     // root — settings, a workout in progress — have no such guard.
-    // Drop the screens the session left behind first. The group layouts turn a
-    // back gesture into a redirect on their own, but the screens stacked at the
-    // root — settings, a workout in progress — have no such guard.
     if (router.canDismiss()) router.dismissAll();
+
+    /**
+     * A deliberate account switch is also a signed-in → signed-out transition,
+     * but it is mid-journey: the user asked for a page, was told this account
+     * cannot open it, and chose to sign in as one that can. Sending them to the
+     * landing page here would throw that away, so the destination recorded
+     * before the sign-out wins.
+     */
+    const pending = takePendingDestination();
+    if (pending) {
+      router.replace(`/(auth)/login?next=${encodeURIComponent(pending)}` as never);
+      return;
+    }
+
     router.replace('/');
   }, [authenticated]);
 };

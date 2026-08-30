@@ -1,10 +1,11 @@
 import React from 'react';
-import { Redirect, Tabs } from 'expo-router';
+import { Redirect, Tabs, usePathname } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createStyleSheet, useStyles } from 'react-native-unistyles';
 import { Home, Dumbbell, Utensils, LineChart, User } from 'lucide-react-native';
 import { TAB_BAR_BASE_HEIGHT, tabBarHeight } from '../../src/theme/layout';
 import { useAuthStore } from '../../src/store/authStore';
+import { isCoach } from '../../src/lib/routing';
 import { useTranslation } from '../../src/i18n';
 
 const ICON_SIZE = 24;
@@ -13,12 +14,33 @@ export default function TabLayout() {
   const { theme, styles } = useStyles(stylesheet);
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const pathname = usePathname();
   const authenticated = useAuthStore((state) => state.isAuthenticated);
+  const hydrated = useAuthStore((state) => state.hydrated);
+  const hasProfile = useAuthStore((state) => state.user !== null);
+  const coach = useAuthStore((state) => isCoach(state.user));
 
   // The root layout holds a spinner until the stored session has been read back,
   // so reaching here without one means there is genuinely no session — whether
   // from a deep link, a back gesture, or a session that ended a moment ago.
   if (!authenticated) return <Redirect href="/" />;
+
+  /**
+   * Wait for `/users/me` before judging the role, exactly as the coach layout
+   * does: `isAuthenticated` flips when the tokens land, but `role` arrives one
+   * request later, and deciding in that gap would show every coach the
+   * unauthorised screen for a moment on each sign-in.
+   */
+  if (!hydrated || !hasProfile) return null;
+
+  /**
+   * These are the athlete's own screens. A coach has no athlete profile, so the
+   * data behind them does not exist for their account — say so rather than
+   * rendering a dashboard of zeroes.
+   */
+  if (coach) {
+    return <Redirect href={`/unauthorized?next=${encodeURIComponent(pathname)}`} />;
+  }
 
   return (
     <Tabs

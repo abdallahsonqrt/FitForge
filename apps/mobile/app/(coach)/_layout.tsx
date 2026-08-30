@@ -1,6 +1,6 @@
 import React from 'react';
 import { ActivityIndicator, View } from 'react-native';
-import { Redirect, Tabs } from 'expo-router';
+import { Redirect, Tabs, usePathname } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createStyleSheet, useStyles } from 'react-native-unistyles';
 import { Dumbbell, LayoutDashboard, MessageSquare, UserCircle, Users } from 'lucide-react-native';
@@ -28,6 +28,8 @@ export default function CoachLayout() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
+  const pathname = usePathname();
+
   const hydrated = useAuthStore((state) => state.hydrated);
   const authenticated = useAuthStore((state) => state.isAuthenticated);
   // Booleans, not the user object: subscribing to the profile itself would
@@ -52,10 +54,18 @@ export default function CoachLayout() {
     );
   }
 
-  // An athlete who deep-links or bookmarks a coach URL goes home rather than
-  // seeing an error. The API enforces this too — every coach route is 403 for a
-  // non-coach — this only decides what the screen shows.
-  if (!coach) return <Redirect href="/(tabs)/home" />;
+  /**
+   * An athlete who deep-links or bookmarks a coach URL is told why the page did
+   * not open, and offered the account switch that would fix it. Silently
+   * redirecting them home — which is what this used to do — is indistinguishable
+   * from a broken link.
+   *
+   * The API enforces this too (every coach route is 403 for a non-coach); this
+   * only decides what the screen shows.
+   */
+  if (!coach) {
+    return <Redirect href={`/unauthorized?next=${encodeURIComponent(pathname)}`} />;
+  }
 
   return (
     <Tabs

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, Platform } from 'react-native';
-import { Link, router } from 'expo-router';
+import { Link, router, useLocalSearchParams } from 'expo-router';
 import { createStyleSheet, useStyles } from 'react-native-unistyles';
 import { Mail, Lock, AlertCircle } from 'lucide-react-native';
 import { KeyboardAvoidingWrapper } from '../../src/components/layout/KeyboardAvoidingWrapper';
@@ -10,6 +10,7 @@ import { Input, Button } from '../../src/components/ui';
 import { useLogin } from '../../src/features/auth/api/useLogin';
 import { getApiErrorMessage, isRejectedCredential } from '../../src/lib/api';
 import { homeHrefFor } from '../../src/lib/routing';
+import { destinationAfterLogin } from '../../src/lib/access';
 import { emailValidator } from '../../src/utils/validators';
 
 /**
@@ -43,6 +44,12 @@ export default function LoginScreen() {
   const { styles, theme } = useStyles(stylesheet);
   const { t } = useTranslation();
   const login = useLogin();
+  /**
+   * Set when the user was sent here from a page they could not open. Honoured
+   * only if the account they sign into may actually open it — see
+   * `destinationAfterLogin`.
+   */
+  const { next } = useLocalSearchParams<{ next?: string }>();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -79,9 +86,22 @@ export default function LoginScreen() {
     login.mutate(
       { email: email.trim().toLowerCase(), password },
       {
-        // `homeHrefFor` owns this rule — spelling it out inline here dropped the
-        // role branch, so a coach signing in landed in the athlete tabs.
-        onSuccess: (user) => router.replace(homeHrefFor(user, user.onboardingComplete)),
+        /**
+         * `homeHrefFor` owns where an account belongs — spelling it out inline
+         * here once dropped the role branch, and coaches landed in the athlete
+         * tabs. `destinationAfterLogin` layers the deep-link case on top: if
+         * they were sent here from a page this account *can* open, finish the
+         * journey they started.
+         */
+        onSuccess: (user) =>
+          router.replace(
+            destinationAfterLogin(
+              user,
+              user.onboardingComplete,
+              next,
+              homeHrefFor(user, user.onboardingComplete),
+            ),
+          ),
         /**
          * A *rejected* password is worth nothing, and a masked field of the
          * wrong length is hard to tell from an empty one — so hand back an

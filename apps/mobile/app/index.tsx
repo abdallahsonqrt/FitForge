@@ -7,7 +7,7 @@ import {
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from 'react-native';
-import { Redirect, router } from 'expo-router';
+import { router } from 'expo-router';
 import { createStyleSheet, useStyles } from 'react-native-unistyles';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { AnimatePresence, MotiView } from 'moti';
@@ -26,6 +26,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '../src/store/authStore';
 import { homeHrefFor } from '../src/lib/routing';
+import { useTranslation } from '../src/i18n';
 import { featuredCoaches, pricingDisclaimer, pricingPlans } from '../src/data/landing';
 import { CoachCard } from '../src/components/landing/CoachCard';
 import { PricingCard } from '../src/components/landing/PricingCard';
@@ -63,6 +64,7 @@ export default function Index() {
   const onboarded = useAuthStore((state) => state.isOnboarded);
   const user = useAuthStore((state) => state.user);
   const { styles, theme } = useStyles(stylesheet);
+  const { t } = useTranslation();
   const layout = useLandingLayout();
   /**
    * This screen sets `headerShown: false` and does not use `ScreenContainer`,
@@ -92,10 +94,19 @@ export default function Index() {
     return { width: navWidth.value * ratio };
   });
 
-  if (authenticated) return <Redirect href={homeHrefFor(user, onboarded)} />;
+  /**
+   * Signed-in visitors are no longer redirected away.
+   *
+   * This page is also the only place coaches and plans are browsable, so
+   * bouncing an authenticated user off it meant they could never read the very
+   * things it exists to show. The nav swaps its sign-up calls to action for a
+   * way back into the app instead — see `openApp` below.
+   */
 
   const register = () => router.push('/(auth)/register');
   const login = () => router.push('/(auth)/login');
+  /** Back into the app, at whichever home this account belongs to. */
+  const openApp = () => router.push(homeHrefFor(user, onboarded));
 
   const goTo = (anchor: Anchor | 'top') => {
     setMenuOpen(false);
@@ -156,14 +167,20 @@ export default function Index() {
                 <NavLink label="How it works" onPress={() => goTo('how')} />
                 <NavLink label="Coaches" onPress={() => goTo('coaches')} />
                 <NavLink label="Plans" onPress={() => goTo('plans')} />
-                <Pressable
-                  onPress={login}
-                  style={({ pressed }) => pressed && styles.pressed}
-                  accessibilityRole="button"
-                >
-                  <Text style={styles.login}>Log in</Text>
-                </Pressable>
-                <Button title="Create account" size="sm" onPress={register} />
+                {authenticated ? (
+                  <Button title={t('landing.openApp')} size="sm" onPress={openApp} />
+                ) : (
+                  <>
+                    <Pressable
+                      onPress={login}
+                      style={({ pressed }) => pressed && styles.pressed}
+                      accessibilityRole="button"
+                    >
+                      <Text style={styles.login}>Log in</Text>
+                    </Pressable>
+                    <Button title="Create account" size="sm" onPress={register} />
+                  </>
+                )}
               </View>
             ) : (
               <Pressable
@@ -192,8 +209,14 @@ export default function Index() {
                 <MobileLink label="How it works" onPress={() => goTo('how')} />
                 <MobileLink label="Coaches" onPress={() => goTo('coaches')} />
                 <MobileLink label="Plans" onPress={() => goTo('plans')} />
-                <Button title="Log in" onPress={login} variant="outline" />
-                <Button title="Create account" onPress={register} />
+                {authenticated ? (
+                  <Button title={t('landing.openApp')} onPress={openApp} />
+                ) : (
+                  <>
+                    <Button title="Log in" onPress={login} variant="outline" />
+                    <Button title="Create account" onPress={register} />
+                  </>
+                )}
               </MotiView>
             )}
           </AnimatePresence>
