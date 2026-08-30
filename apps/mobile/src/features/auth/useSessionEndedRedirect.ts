@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { router } from 'expo-router';
 import { useAuthStore } from '../../store/authStore';
-import { takePendingDestination } from '../../lib/pendingDestination';
 
 /**
  * Sends the app back to the public landing page whenever a session ends.
@@ -16,6 +15,8 @@ import { takePendingDestination } from '../../lib/pendingDestination';
  */
 export const useSessionEndedRedirect = () => {
   const authenticated = useAuthStore((state) => state.isAuthenticated);
+  const logoutReason = useAuthStore((state) => state.logoutReason);
+  const clearLogoutReason = useAuthStore((state) => state.clearLogoutReason);
   const wasAuthenticated = useRef(authenticated);
 
   useEffect(() => {
@@ -31,16 +32,18 @@ export const useSessionEndedRedirect = () => {
     /**
      * A deliberate account switch is also a signed-in → signed-out transition,
      * but it is mid-journey: the user asked for a page, was told this account
-     * cannot open it, and chose to sign in as one that can. Sending them to the
-     * landing page here would throw that away, so the destination recorded
-     * before the sign-out wins.
+     * cannot open it, and chose to sign in as one that can. The sign-out says
+     * which of the two happened, so this reads that rather than guessing.
      */
-    const pending = takePendingDestination();
-    if (pending) {
-      router.replace(`/(auth)/login?next=${encodeURIComponent(pending)}` as never);
-      return;
+    if (logoutReason?.kind === 'switching' && logoutReason.intended) {
+      const next = encodeURIComponent(logoutReason.intended);
+      router.replace(`/(auth)/login?next=${next}` as never);
+    } else if (logoutReason?.kind === 'switching') {
+      router.replace('/(auth)/login' as never);
+    } else {
+      router.replace('/');
     }
 
-    router.replace('/');
-  }, [authenticated]);
+    clearLogoutReason();
+  }, [authenticated, logoutReason, clearLogoutReason]);
 };

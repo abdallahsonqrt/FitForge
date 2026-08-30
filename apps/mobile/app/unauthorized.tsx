@@ -8,7 +8,6 @@ import { Button } from '../src/components/ui';
 import { useLogout } from '../src/features/auth/api/useLogout';
 import { useAuthStore } from '../src/store/authStore';
 import { goBack } from '../src/lib/navigation';
-import { setPendingDestination } from '../src/lib/pendingDestination';
 import { homeHrefFor } from '../src/lib/routing';
 import { useTranslation } from '../src/i18n';
 
@@ -37,20 +36,13 @@ export default function UnauthorizedScreen() {
    * account may open it they land there directly; if not, they land on their own
    * home — never back here.
    */
+  /**
+   * Sign out *as an account switch*, which is what sends the app to sign-in
+   * carrying `next` rather than to the landing page. Navigation is left entirely
+   * to `useSessionEndedRedirect`, so there is one place deciding it.
+   */
   const switchAccount = () => {
-    /**
-     * Recorded *before* signing out. Logging out is itself a signed-in →
-     * signed-out transition, and `useSessionEndedRedirect` would otherwise send
-     * this straight to the landing page — throwing away the page the user was
-     * trying to reach. That hook reads this and routes to sign-in instead.
-     */
-    setPendingDestination(next ?? null);
-    logout.mutate(undefined, {
-      onSettled: () => {
-        // Only needed when nothing was pending; the hook owns the other case.
-        if (!next) router.replace('/(auth)/login' as never);
-      },
-    });
+    logout.mutate({ kind: 'switching', intended: next });
   };
 
   return (
