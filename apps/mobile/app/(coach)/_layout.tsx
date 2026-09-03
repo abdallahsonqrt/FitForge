@@ -146,6 +146,10 @@ const stylesheet = createStyleSheet((theme) => ({
     // An explicit line height stops descenders being clipped by the bar edge.
     lineHeight: 14,
     marginTop: 2,
+    // The label is a flex item next to the icon, and its `overflow: hidden` means
+    // any shrinking slices the glyphs in half rather than shifting them. Opting
+    // out of shrinking keeps the full 14px line box, so the text renders whole.
+    flexShrink: 0,
   },
   tabIcon: {
     marginTop: 0,
