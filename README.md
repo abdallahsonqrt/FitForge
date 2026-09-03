@@ -16,6 +16,34 @@ fitforge/
 
 ---
 
+## Screenshots
+
+Captured from the running app on Expo web at an iPhone-sized viewport, against a
+locally seeded database.
+
+### Athlete
+
+| Home | Training | Nutrition | Progress |
+|:--:|:--:|:--:|:--:|
+| <img src="docs/screenshots/athlete-home.png" alt="Home screen with the recommended workout, calorie ring, steps and water" width="200"> | <img src="docs/screenshots/athlete-training.png" alt="Training screen listing plans filtered by subscription tier" width="200"> | <img src="docs/screenshots/athlete-nutrition.png" alt="Nutrition screen with calories, macro rings, water, steps and the day's meals" width="200"> | <img src="docs/screenshots/athlete-progress.png" alt="Progress screen with streak, weight trend chart and workout calendar" width="200"> |
+| Recommended workout and targets derived from the profile | Plans filtered by tier | Macros, water and steps for the day | Streak, weight trend and workout calendar |
+
+### Coach workspace
+
+| Dashboard | Programs | Clients |
+|:--:|:--:|:--:|
+| <img src="docs/screenshots/coach-dashboard.png" alt="Coach dashboard with client, program, message and request counts" width="200"> | <img src="docs/screenshots/coach-programs.png" alt="Coach programs list with visibility filters and published programs" width="200"> | <img src="docs/screenshots/coach-clients.png" alt="Coach client roster with status filters and accept, decline, pause and complete actions" width="200"> |
+| Counts and quick actions | Filter by visibility, publish, archive | The status transitions the API allows |
+
+### Getting in
+
+| Landing | Onboarding |
+|:--:|:--:|
+| <img src="docs/screenshots/landing.png" alt="Marketing landing page with the coach directory call to action" width="200"> | <img src="docs/screenshots/onboarding.png" alt="First onboarding step asking for gender, with a progress bar" width="200"> |
+| Public page, served by the same Expo app | 1 of 13 steps |
+
+---
+
 ## Tech stack
 
 ### Frontend
